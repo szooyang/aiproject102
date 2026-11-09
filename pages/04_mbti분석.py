@@ -15,10 +15,11 @@ st.title("🌍 국가별 MBTI 비율 분석")
 st.caption("국가를 선택하면 MBTI 16가지 유형별 비율을 확인할 수 있습니다.")
 
 # CSV 파일 경로
-BASE_DIR = Path(__file__).resolve().parent
-CSV_PATH = BASE_DIR / "countriesMBTI_16types(8).csv"
+# pages 폴더의 상위 폴더에서 CSV 찾기
+BASE_DIR = Path(__file__).resolve().parent.parent
+CSV_PATH = BASE_DIR / "countriesMBTI_16types.csv"
 
-# CSV 읽기
+# CSV 파일 읽기
 @st.cache_data
 def load_data(file_path):
     encodings = ["utf-8-sig", "utf-8", "cp949"]
@@ -31,25 +32,30 @@ def load_data(file_path):
 
     return pd.read_csv(file_path)
 
+# CSV 파일 존재 여부 확인
 if not CSV_PATH.exists():
     st.error("CSV 파일을 찾을 수 없습니다.")
     st.info(
-        "app.py와 같은 폴더에 "
-        "countriesMBTI_16types(8).csv 파일을 넣어주세요."
+        "저장소 최상위 폴더에 "
+        "countriesMBTI_16types(8).csv 파일이 있는지 확인해주세요."
     )
+    st.code(str(CSV_PATH))
     st.stop()
 
+# 데이터 불러오기
 try:
     df = load_data(CSV_PATH)
 except Exception as error:
     st.error(f"CSV 파일 읽기 오류: {error}")
     st.stop()
 
-# 데이터 확인
+# Country 열 확인
 if "Country" not in df.columns:
     st.error("Country 열을 찾을 수 없습니다.")
+    st.write(df.columns.tolist())
     st.stop()
 
+# MBTI 열 추출
 mbti_columns = [
     column for column in df.columns
     if column != "Country"
@@ -57,8 +63,7 @@ mbti_columns = [
 
 if len(mbti_columns) != 16:
     st.warning(
-        f"MBTI 열이 {len(mbti_columns)}개입니다. "
-        "CSV 파일을 확인해주세요."
+        f"MBTI 유형 열이 {len(mbti_columns)}개입니다."
     )
 
 # 숫자형으로 변환
@@ -95,7 +100,7 @@ if country_data.empty:
 
 country_row = country_data.iloc[0]
 
-# MBTI 데이터 정리 및 백분율 변환
+# MBTI 비율을 백분율로 변환
 chart_data = pd.DataFrame({
     "MBTI": mbti_columns,
     "비율": [
@@ -104,9 +109,9 @@ chart_data = pd.DataFrame({
     ]
 })
 
+# 결측치 제거 및 높은 순서대로 정렬
 chart_data = chart_data.dropna(subset=["비율"])
 
-# 비율이 높은 순서대로 정렬
 chart_data = chart_data.sort_values(
     "비율",
     ascending=False
@@ -117,8 +122,8 @@ if chart_data.empty:
     st.stop()
 
 # 색상 지정
-# 1위는 빨간색
-# 나머지는 진한 파란색에서 연한 파란색으로
+# 1위 빨간색
+# 나머지 파란색 그라데이션
 blue_gradient = [
     "#2563EB", "#3478E5", "#4388E8",
     "#5297EA", "#62A5EC", "#72B2EE",
@@ -132,7 +137,7 @@ bar_colors.extend(
     blue_gradient[:len(chart_data) - 1]
 )
 
-# 1위 유형 확인
+# 1위 MBTI 확인
 top_mbti = chart_data.iloc[0]["MBTI"]
 top_ratio = chart_data.iloc[0]["비율"]
 
@@ -188,12 +193,7 @@ fig.update_layout(
     ),
     showlegend=False,
     height=650,
-    margin=dict(
-        l=30,
-        r=55,
-        t=30,
-        b=50
-    ),
+    margin=dict(l=30, r=55, t=30, b=50),
     plot_bgcolor="white",
     paper_bgcolor="white",
     font=dict(size=13)
@@ -219,7 +219,6 @@ with st.expander("📋 MBTI 비율 데이터 보기"):
     )
 
 st.caption(
-    "※ 원본 데이터에 100을 곱하여 백분율로 표시했습니다. "
-    "자료의 조사 대상과 수집 방법에 따라 실제 인구의 "
-    "분포와 다를 수 있습니다."
+    "※ 원본 CSV 값에 100을 곱하여 백분율로 표시했습니다. "
+    "조사 대상과 수집 방법에 따라 실제 인구 분포와 다를 수 있습니다."
 )
