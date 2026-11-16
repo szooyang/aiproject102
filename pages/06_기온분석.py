@@ -23,9 +23,9 @@ st.write("월을 선택하면 연도별 최고기온과 최저기온의 변화�
 current_dir = Path(__file__).resolve().parent
 
 if current_dir.name == "pages":
-    csv_path = current_dir.parent / "temperature(7).csv"
+    csv_path = current_dir.parent / "temperature.csv"
 else:
-    csv_path = current_dir / "temperature(7).csv"
+    csv_path = current_dir / "temperature.csv"
 
 # 파일이 현재 작업 폴더에 있는 경우도 확인
 if not csv_path.exists():
